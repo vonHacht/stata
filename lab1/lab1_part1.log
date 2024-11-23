@@ -1,0 +1,233 @@
+----------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /home/ulla/Git/stata/lab1/lab1_part1.log
+  log type:  text
+ opened on:  23 Nov 2024, 12:16:25
+
+. 
+. cd "/home/ulla/Git/stata/lab1"
+/home/ulla/Git/stata/lab1
+
+. use training_results.dta
+
+. describe
+
+Contains data from training_results.dta
+ Observations:           500                  
+    Variables:             9                  17 Nov 2024 11:41
+----------------------------------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+----------------------------------------------------------------------------------------------------------------------------
+age             float   %9.0g                 
+season_score    float   %9.0g                 
+hours_trained   float   %9.0g                 
+good_pysique_~r str3    %9s                   
+pass            float   %9.0g                 
+distinction     float   %9.0g                 
+fail            float   %9.0g                 
+new_method      float   %9.0g                 
+training_status float   %9.0g                 
+----------------------------------------------------------------------------------------------------------------------------
+Sorted by: 
+
+. 
+. // 1. Summarize statistics
+. summarize
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         age |        500      24.076    3.837666         17         38
+season_score |        500       58.13     10.4395         36         89
+hours_trai~d |        500      38.506    3.273438         28         46
+good_pysiq~r |          0
+        pass |        500        .714    .4523419          0          1
+-------------+---------------------------------------------------------
+ distinction |        500        .118    .3229312          0          1
+        fail |        500        .168    .3742407          0          1
+  new_method |        500        .498    .5004967          0          1
+training_s~s |        500       2.156    .5833907          1          3
+
+. 
+. // good pysique could be converted to a binary value e.g. Yes = 1 and No = 0
+. // which we would be able to summarize
+. // ...
+. 
+. // 2. Scatter plot & correlate
+. twoway scatter season_score hours_trained 
+
+. correlate season_score hours_trained
+(obs=500)
+
+             | season~e hours_~d
+-------------+------------------
+season_score |   1.0000
+hours_trai~d |  -0.1121   1.0000
+
+
+. 
+. // season score and hours trained have
+. // a small negative correlation indicating
+. // that more training does not always effect the
+. // goals scored in a positive way. 
+. // (Maybe more training exhausts players
+. // and lessen the energy to score in matches)
+. 
+. // 3. OLS regressor
+. regress season_score hours_trained
+
+      Source |       SS           df       MS      Number of obs   =       500
+-------------+----------------------------------   F(1, 498)       =      6.34
+       Model |  683.623654         1  683.623654   Prob > F        =    0.0121
+    Residual |  53698.9263       498  107.829169   R-squared       =    0.0126
+-------------+----------------------------------   Adj R-squared   =    0.0106
+       Total |    54382.55       499  108.983066   Root MSE        =    10.384
+
+-------------------------------------------------------------------------------
+ season_score | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+hours_trained |  -.3575643   .1420083    -2.52   0.012    -.6365736   -.0785551
+        _cons |   71.89837   5.487856    13.10   0.000     61.11617    82.68058
+-------------------------------------------------------------------------------
+
+. 
+. // Season score = 71.89 + -0.35*Hours trained + ui
+. // B0 - if hours trained is equal to 0 the season scored for a 
+. // player is assumed to be 71.89, the intercept
+. // B1 - hours trained would decrease the season scored
+. // by approx -0.35 * amount of hours trained, average change
+. // in the dependent variable
+. 
+. // 4. Null hypothesis
+. // Does training hours affect season scored
+. // H0 - training hours does not affect season scored 
+. // H1 - training hours does affect season scored
+. 
+. // 1. t-value: Coefficient/( Std. err(Coefficient) )
+. // 2. degrees of freedom: 500 observations - 2(for out case)
+. // 3. Look into t-distribution table
+. 
+. // Check H0
+. // 0.000 < 0.01
+. // => reject the null hypothesis
+. // Check H1
+. // 0.012 => 1.2 %
+. // 1.2% > 1%
+. // 1.2% < 5%, statistically significant
+. 
+. // => training does have a small negative effect on seasons scored
+. 
+. // 5. New training columns
+. // Heavy training 38.506 + 3.273438 (1 std dev)
+. // Normal training 38.506
+. // Little training 38.506 - 3.273438 (1 std dev)
+. 
+. // old
+. // generate heavy_training = (hours_trained >= 42)
+. // generate little_training = (hours_trained <= 35)
+. // generate normal_training = (hours_trained > 35 & hours_trained < 42)
+. 
+. generate training_category = .
+(500 missing values generated)
+
+. replace training_category = 1 if hours_trained <= 35
+(91 real changes made)
+
+. replace training_category = 2 if hours_trained > 35 & hours_trained < 42
+(324 real changes made)
+
+. replace training_category = 3 if hours_trained >= 42
+(85 real changes made)
+
+. label define training_labels 1 "Little" 2 "Normal" 3 "Heavy"
+
+. label values training_category training_labels
+
+. 
+. summarize
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+         age |        500      24.076    3.837666         17         38
+season_score |        500       58.13     10.4395         36         89
+hours_trai~d |        500      38.506    3.273438         28         46
+good_pysiq~r |          0
+        pass |        500        .714    .4523419          0          1
+-------------+---------------------------------------------------------
+ distinction |        500        .118    .3229312          0          1
+        fail |        500        .168    .3742407          0          1
+  new_method |        500        .498    .5004967          0          1
+training_s~s |        500       2.156    .5833907          1          3
+training_c~y |        500       1.988    .5937686          1          3
+
+. 
+. regress season_score i.training_category
+
+      Source |       SS           df       MS      Number of obs   =       500
+-------------+----------------------------------   F(2, 497)       =      2.40
+       Model |  520.809657         2  260.404828   Prob > F        =    0.0915
+    Residual |  53861.7403       497  108.373723   R-squared       =    0.0096
+-------------+----------------------------------   Adj R-squared   =    0.0056
+       Total |    54382.55       499  108.983066   Root MSE        =     10.41
+
+-----------------------------------------------------------------------------------
+     season_score | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+------------------+----------------------------------------------------------------
+training_category |
+          Normal  |  -2.404965   1.235074    -1.95   0.052    -4.831575    .0216438
+           Heavy  |  -3.125663    1.57032    -1.99   0.047    -6.210947   -.0403785
+                  |
+            _cons |   60.21978   1.091293    55.18   0.000     58.07566     62.3639
+-----------------------------------------------------------------------------------
+
+. 
+. 
+. // Season score = 60.21 + -2.4*Normal + -3.12*Heavy+ ui
+. // Heavy: statistically significant at 5% but not 1%
+. // Normal: marginally significant at 5%
+. 
+. // 6. Not casual estimate
+. // * Omitted Variable Bias
+. //      Omitted variables not seen in correlation with the dependent variables
+. //      season scored and independent variable training could violate then
+. //      assumption of no omitted variable bias and be a source of endogenity.
+. // * Reverse Causality
+. //      If players that score many goals are assigned to little training
+. //      and vice verse it could lead to a reverse causality and violate
+. //      the assumption of that independent variables is exogenous and 
+. //      thus endogenious.
+. // * Measurement Error
+. //      Independent variable training could be based on inaccurately reported
+. //      or recorded training hours.
+. // * Selection bias
+. //      If players themself choose to be part of litte, normal or heavy 
+. //      training by unobserved factors. The independent variable training
+. //      could be non-random.
+. // * Simultaneity
+. //      If there is an unobserved process that would decide which training
+. //      program each player should choose. A trainer could decide based on 
+. //      goals scored to which training category the player should go.
+. // * Unobserved Time Effects
+. //      Changes in the quality of training could lead to that both
+. //      the dependent and independent variables season scored and 
+. //      training could be worse or better.
+. 
+. // 7. Physical state
+. // * age, mean 24
+. // * hours trained, mean 42
+. // * good physique post summer
+. 
+. generate physical_state = .
+(500 missing values generated)
+
+. replace physical_state = 1 if hours_trained <= 42 
+(440 real changes made)
+
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  /home/ulla/Git/stata/lab1/lab1_part1.log
+  log type:  text
+ closed on:  23 Nov 2024, 12:16:26
+----------------------------------------------------------------------------------------------------------------------------
