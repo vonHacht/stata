@@ -1,0 +1,172 @@
+------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /home/ulla/Git/stata/lab1/lab1_part2.log
+  log type:  text
+ opened on:  24 Nov 2024, 11:35:19
+
+. 
+. cd "/home/ulla/Git/stata/lab1"
+/home/ulla/Git/stata/lab1
+
+. use colonial_legacy.dta, clear
+
+. describe
+
+Contains data from colonial_legacy.dta
+ Observations:        12,139                  
+    Variables:            21                  16 Nov 2024 14:22
+------------------------------------------------------------------------------------------------
+Variable      Storage   Display    Value
+    name         type    format    label      Variable label
+------------------------------------------------------------------------------------------------
+hv007           int     %8.0g                 year of interview
+hv025           byte    %8.0g      hv025      type of place of residence
+refused_any_b~t float   %9.0g                 
+times_visited   float   %9.0g                 Prospected number of times visited
+LATNUM          double  %9.0g                 LATNUM
+LONGNUM         double  %9.0g                 LONGNUM
+land_suit       double  %9.0g                 land_suit
+elev            double  %9.0g                 elev
+malaria_ecology double  %9.0g                 malaria_ecology
+mean_temp       double  %9.0g                 mean_temp
+mean_rain       double  %9.0g                 mean_rain
+tsi_grid_tsi    double  %9.0g                 tsi_grid_tsi
+atlantic_all_~s double  %9.0g                 atlantic_all_years
+dist_missions   double  %9.0g                 dist_missions
+relative_suit~y float   %9.0g                 
+b4              byte    %8.0g      b4         sex of child
+vaccination_i~x float   %9.0g                 
+child_age_cont  float   %9.0g                 
+child_age_cont2 float   %9.0g                 
+cluster_id      float   %9.0g                 group(hv001 hv007)
+hist_road_acc~s float   %9.0g                 
+------------------------------------------------------------------------------------------------
+Sorted by: 
+
+. 
+. // summarize statistics
+. summarize
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+       hv007 |     12,139    2009.211    3.053599       2004       2011
+       hv025 |     12,139    1.579784    .4936138          1          2
+refused_an~t |     12,139    .0215833    .1453246          0          1
+times_visi~d |     12,139    4.900722    4.317661          0       16.8
+      LATNUM |     12,139    6.349405    2.757249   2.257745   12.75379
+-------------+---------------------------------------------------------
+     LONGNUM |     12,139    12.37698    1.772495   9.530553   15.62323
+   land_suit |     12,139    .1274686    .1813358          0   .6462929
+        elev |     12,139     616.413     372.244   12.24029   1709.298
+malaria_ec~y |     12,139    13.89488    4.825395          0   26.33851
+   mean_temp |     12,139    24.69676    2.256517   18.89167   28.43333
+-------------+---------------------------------------------------------
+   mean_rain |     12,139    138.1347    61.43567   30.41667   292.6667
+tsi_grid_tsi |     12,139      .78811    .6777514  -1.649264    1.60396
+atlantic_a~s |     12,139    1416.659    2384.594          0      12613
+dist_missi~s |     12,139    .5387594    .9713525          0          6
+relative_s~y |     12,139    1.545447      2.3532  -3.829945   4.366659
+-------------+---------------------------------------------------------
+          b4 |     12,139    1.503666    .5000072          1          2
+vaccinatio~x |     12,139    .9442293    .4151961        -.3        1.4
+child_age_~t |     12,139    .5791732    .4141751   .0833333   3.916667
+child_age_~2 |     12,139    .5069685    .9416312   .0069444   15.34028
+  cluster_id |     12,139    544.2931    306.0805          2       1040
+-------------+---------------------------------------------------------
+hist_road_~s |     12,139    .1963918    .3972846          0          1
+
+. 
+. local controls ///
+>     child_age_cont child_age_cont2 b4 hv007 hv025 elev LATNUM ///
+>     LONGNUM mean_temp mean_rain land_suit malaria_ecology tsi_grid_tsi ///
+>     atlantic_all_years dist_missions
+
+. 
+. // 10. OLS model    
+.     
+. regress vaccination_index times_visited `controls'
+
+      Source |       SS           df       MS      Number of obs   =    12,139
+-------------+----------------------------------   F(16, 12122)    =    427.08
+       Model |  754.309733        16  47.1443583   Prob > F        =    0.0000
+    Residual |  1338.13348    12,122  .110388837   R-squared       =    0.3605
+-------------+----------------------------------   Adj R-squared   =    0.3596
+       Total |  2092.44321    12,138  .172387808   Root MSE        =    .33225
+
+------------------------------------------------------------------------------------
+ vaccination_index | Coefficient  Std. err.      t    P>|t|     [95% conf. interval]
+-------------------+----------------------------------------------------------------
+     times_visited |  -.0683208   .0011783   -57.98   0.000    -.0706304   -.0660112
+    child_age_cont |   .0625961    .016636     3.76   0.000     .0299869    .0952053
+   child_age_cont2 |  -.0107277   .0073178    -1.47   0.143    -.0250718    .0036164
+                b4 |   .0141816   .0060353     2.35   0.019     .0023514    .0260118
+             hv007 |    .005346   .0009913     5.39   0.000     .0034028    .0072892
+             hv025 |  -.0243657   .0069036    -3.53   0.000    -.0378979   -.0108336
+              elev |   .0001465   .0000368     3.98   0.000     .0000744    .0002186
+            LATNUM |    -.04525   .0031971   -14.15   0.000    -.0515168   -.0389832
+           LONGNUM |  -.0437315   .0039204   -11.15   0.000    -.0514162   -.0360468
+         mean_temp |  -.0245103   .0064606    -3.79   0.000    -.0371741   -.0118465
+         mean_rain |  -.0013292   .0001375    -9.66   0.000    -.0015988   -.0010596
+         land_suit |  -.0419906   .0176809    -2.37   0.018    -.0766481   -.0073331
+   malaria_ecology |   .0099298   .0010547     9.41   0.000     .0078625    .0119972
+      tsi_grid_tsi |  -.0906259   .0069829   -12.98   0.000    -.1043136   -.0769383
+atlantic_all_years |  -3.03e-06   1.41e-06    -2.16   0.031    -5.79e-06   -2.77e-07
+     dist_missions |  -.0086846   .0051863    -1.67   0.094    -.0188506    .0014814
+             _cons |  -8.000813   2.001784    -4.00   0.000    -11.92463   -4.076996
+------------------------------------------------------------------------------------
+
+. 
+. // vaccination index = -8 + -0.07*times visited + control + ui
+. // beta 1: ...
+. 
+. 
+. // 14. First & Second stage equations
+. // First stage: times_visited = a_0 + a_1 * relative_suitability + control + error term
+. // Second stage: vaccination_index = beta_0 + beta_1 * relative_suitability + control + error 
+> term
+. 
+. ivregress 2sls vaccination_index (times_visited = relative_suitability) ///
+>     `controls', robust
+
+Instrumental variables 2SLS regression            Number of obs   =     12,139
+                                                  Wald chi2(16)   =    1153.25
+                                                  Prob > chi2     =     0.0000
+                                                  R-squared       =          .
+                                                  Root MSE        =     .75798
+
+------------------------------------------------------------------------------------
+                   |               Robust
+ vaccination_index | Coefficient  std. err.      z    P>|z|     [95% conf. interval]
+-------------------+----------------------------------------------------------------
+     times_visited |  -.3345608   .0323586   -10.34   0.000    -.3979824   -.2711391
+    child_age_cont |   .0926172   .0371265     2.49   0.013     .0198506    .1653838
+   child_age_cont2 |  -.0140279    .015955    -0.88   0.379    -.0452992    .0172433
+                b4 |   .0298897   .0139429     2.14   0.032     .0025621    .0572172
+             hv007 |   .0099794   .0022936     4.35   0.000      .005484    .0144748
+             hv025 |  -.3178112   .0393831    -8.07   0.000    -.3950006   -.2406218
+              elev |   .0004085   .0000936     4.36   0.000      .000225     .000592
+            LATNUM |   -.380142   .0408909    -9.30   0.000    -.4602867   -.2999973
+           LONGNUM |  -.3003708   .0333972    -8.99   0.000    -.3658282   -.2349134
+         mean_temp |   .0808225   .0182902     4.42   0.000     .0449743    .1166707
+         mean_rain |   -.005773   .0006627    -8.71   0.000    -.0070719   -.0044741
+         land_suit |   -.182073   .0352513    -5.17   0.000    -.2511643   -.1129818
+   malaria_ecology |   .0379289   .0043095     8.80   0.000     .0294824    .0463755
+      tsi_grid_tsi |  -.1386388   .0136839   -10.13   0.000    -.1654586   -.1118189
+atlantic_all_years |   .0000135   3.06e-06     4.39   0.000     7.45e-06    .0000195
+     dist_missions |  -.1628866   .0233257    -6.98   0.000    -.2086041    -.117169
+             _cons |  -12.70118   4.519314    -2.81   0.005    -21.55887   -3.843485
+------------------------------------------------------------------------------------
+Endogenous: times_visited
+Exogenous:  child_age_cont child_age_cont2 b4 hv007 hv025 elev LATNUM LONGNUM
+            mean_temp mean_rain land_suit malaria_ecology tsi_grid_tsi
+            atlantic_all_years dist_missions relative_suitability
+
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  /home/ulla/Git/stata/lab1/lab1_part2.log
+  log type:  text
+ closed on:  24 Nov 2024, 11:35:19
+------------------------------------------------------------------------------------------------
