@@ -59,11 +59,6 @@ regress season_score hours_trained
 // Normal training 38.506
 // Little training 38.506 - 3.273438 (1 std dev)
 
-// old
-// generate heavy_training = (hours_trained >= 42)
-// generate little_training = (hours_trained <= 35)
-// generate normal_training = (hours_trained > 35 & hours_trained < 42)
-
 generate training_category = .
 replace training_category = 1 if hours_trained <= 35
 replace training_category = 2 if hours_trained > 35 & hours_trained < 42
@@ -71,12 +66,10 @@ replace training_category = 3 if hours_trained >= 42
 label define training_labels 1 "Little" 2 "Normal" 3 "Heavy"
 label values training_category training_labels
 
-summarize
-
 regress season_score i.training_category
 
 
-// Season score = 60.21 + -2.4*Normal + -3.12*Heavy+ ui
+// Season score = 60.21 + -2.4*Normal + -3.12*Heavy + ui
 // Heavy: statistically significant at 5% but not 1%
 // Normal: marginally significant at 5%
 
@@ -90,29 +83,27 @@ regress season_score i.training_category
 //	and vice verse it could lead to a reverse causality and violate
 //	the assumption of that independent variables is exogenous and 
 //	thus endogenious.
-// * Measurement Error
-//	Independent variable training could be based on inaccurately reported
-//	or recorded training hours.
-// * Selection bias
-//	If players themself choose to be part of litte, normal or heavy 
-// 	training by unobserved factors. The independent variable training
-//	could be non-random.
-// * Simultaneity
-//	If there is an unobserved process that would decide which training
-//	program each player should choose. A trainer could decide based on 
-//	goals scored to which training category the player should go.
-// * Unobserved Time Effects
-//	Changes in the quality of training could lead to that both
-//	the dependent and independent variables season scored and 
-//	training could be worse or better.
 
 // 7. Physical state
-// * age, mean 24
-// * hours trained, mean 42
-// * good physique post summer
 
 generate physical_state = .
-replace physical_state = 1 if hours_trained <= 42 
+replace physical_state = 1 if (good_pysique_post_summer == "Yes")
+replace physical_state = 0 if (good_pysique_post_summer == "No")
+
+regress season_score hours_trained physical_state
+
+// 8. 
+// There could still be omitted variables such as self-confidence measurement
+// If players score many goals they could be assigned to fewer training hours_trained
+
+// 9.
+
+// Calculate ATE
+mean season_score, over(new_method) //  58.33333 - 57.92829
+
+
+// With new method
+regress season_score new_method // coefficient 0.4050465
 
 
 log close
